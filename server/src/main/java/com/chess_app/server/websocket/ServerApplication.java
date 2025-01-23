@@ -1,4 +1,4 @@
-package com.chess_app.server;
+package com.chess_app.server.websocket;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
