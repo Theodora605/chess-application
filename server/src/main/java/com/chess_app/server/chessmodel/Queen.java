@@ -38,7 +38,8 @@ public class Queen extends ChessPiece{
                 xCurr = xCurr+dir[0];
                 yCurr = yCurr+dir[1];
             }
-            if(inBounds(xCurr,yCurr) && canTake(xPos, yPos, board) && board[xCurr][yCurr] instanceof King){
+
+            if(inBounds(xCurr,yCurr) && canTake(xCurr, yCurr, board) && board[xCurr][yCurr] instanceof King){
                 return true;
             }
         }

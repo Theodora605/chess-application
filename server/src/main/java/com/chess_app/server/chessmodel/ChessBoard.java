@@ -1,8 +1,6 @@
 package com.chess_app.server.chessmodel;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ChessBoard {
 
@@ -42,7 +40,6 @@ public class ChessBoard {
             board[i][7] = blackBackRow[i];
         }
 
-        System.out.println(board);
 
         whitePositionMap = new HashMap<>();
         blackPositionMap = new HashMap<>();
@@ -87,6 +84,7 @@ public class ChessBoard {
             for(String key: whitePositionMap.keySet()){
                 int oppX = whitePositionMap.get(key)[0];
                 int oppY = whitePositionMap.get(key)[1];
+
                 if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
                     //then revert
                     board[xCurr][yCurr] = board[xNew][yNew];
@@ -105,6 +103,33 @@ public class ChessBoard {
 
     }
 
+    public String serialize(){
+        List<String> res = new ArrayList<>();
+        for (int y = 0; y < 8; y++){
+            for(int x = 0; x < 8; x++){
+                if(board[x][y] == null){
+                    res.add(".");
+                }else{
+                    res.add( (board[x][y].getTeam() == ChessPiece.WHITE ? "w" : "b") + board[x][y].getId());
+                }
+
+            }
+        }
+        return String.join(",",res);
+    }
+
+    public Set<String> getMoveset(String pos, int team) throws ChessError{
+        int x = Integer.parseInt(pos.substring(0,1));
+        int y = Integer.parseInt(pos.substring(1));
+        if(board[x][y] == null){
+            throw new ChessError("No piece in this location", pos);
+        }
+        if(board[x][y].getTeam() != team){
+            throw new ChessError("Not your piece", pos);
+        }
+        return board[x][y].getMoveset(x,y,board);
+    }
+
     @Override
     public String toString() {
         StringBuilder res = new StringBuilder();
@@ -118,7 +143,7 @@ public class ChessBoard {
                 }
                 res.append("|");
             }
-            res.append("/n");
+            res.append("\n");
         }
         return res.toString();
     }
