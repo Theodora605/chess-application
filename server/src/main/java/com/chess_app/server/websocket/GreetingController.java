@@ -1,4 +1,4 @@
-package com.chess_app.server.websocket;
+    package com.chess_app.server.websocket;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -9,7 +9,9 @@ import org.springframework.web.util.HtmlUtils;
 public class GreetingController {
 
     @MessageMapping("/hello")
-    public void greeting(HelloMessage message) throws Exception{
+    @SendTo("/topic/greetings")
+    public Greeting greeting(HelloMessage message) throws Exception{
         System.out.println("Hello, "+message.getName());
+        return new Greeting("Hello, " + HtmlUtils.htmlEscape(message.getName()) + "!");
     }
 }
