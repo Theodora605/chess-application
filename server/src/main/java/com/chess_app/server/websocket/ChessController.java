@@ -15,7 +15,7 @@ public class ChessController {
     ChessBoard board = new ChessBoard();
 
     @MessageMapping("/chess")
-    @SendTo("state/response")
+    @SendTo("/state/response")
     public ChessServerMessage response(ChessClientMessage message){
         switch (message.getRequest()){
             case "MOVESET":
@@ -41,7 +41,7 @@ public class ChessController {
                 }
         }
 
-        return new ChessServerMessage();
+        return new ChessServerMessage("FAIL", message.getRequest() + " is not a recognized request");
     }
 
 }
