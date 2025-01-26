@@ -22,26 +22,26 @@ public class ChessController {
                 try {
                     Set<String> moves = board.getMoveset(message.getPositionFrom(), message.getPlayer().equals("WHITE") ? ChessPiece.WHITE : ChessPiece.BLACK);
                     System.out.println("Success: " + moves );
-                    return new ChessServerMessage("SUCCESS", board.serialize(), String.join(",", moves));
+                    return new ChessServerMessage("SUCCESS", "MOVESET", board.serialize(), String.join(",", moves));
                 }catch (ChessError e){
                     System.out.println("Fail: "+e.getMessage());
-                    return new ChessServerMessage("FAIL", e.getMessage(), e.getPositionInvolved());
+                    return new ChessServerMessage("FAIL", "MOVESET", e.getMessage(), e.getPositionInvolved());
                 }
             case "STATE":
                 System.out.println("Success: " + board.serialize());
-                return new ChessServerMessage("SUCCESS", board.serialize());
+                return new ChessServerMessage("SUCCESS", "STATE", board.serialize());
             case "MOVE":
                 try {
                     board.move(message.getPositionFrom(), message.getPositionTo(), message.getPlayer().equals("WHITE") ? ChessPiece.WHITE : ChessPiece.BLACK);
                     System.out.println("Success");
-                    return new ChessServerMessage("SUCCESS", board.serialize());
+                    return new ChessServerMessage("SUCCESS", "MOVE", board.serialize());
                 }catch (ChessError e){
                     System.out.println("Fail: " + e.getMessage());
-                    return new ChessServerMessage("FAIL", e.getMessage(), e.getPositionInvolved());
+                    return new ChessServerMessage("FAIL", "MOVE", e.getMessage(), e.getPositionInvolved());
                 }
         }
 
-        return new ChessServerMessage("FAIL", message.getRequest() + " is not a recognized request");
+        return new ChessServerMessage("FAIL", message.getRequest(), "Invalid request");
     }
 
 }
