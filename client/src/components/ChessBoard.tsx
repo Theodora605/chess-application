@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSubscription } from "react-stomp-hooks";
+import { useStompClient, useSubscription } from "react-stomp-hooks";
 import { z } from "zod";
 import styles from "./ChessBoard.module.css";
 
@@ -22,23 +22,30 @@ interface ChessPiece {
   player: string;
 }
 
+interface Position {
+  x: number;
+  y: number;
+}
+
 interface ChessClientMessage {
-  request: "STATE" | "MOVE" | "MOVESET";
-  positionFrom: string;
-  positionTo: string;
+  request: "STATE" | "MOVE" | "MOVESET" | "RESET";
+  positionFrom: string | null;
+  positionTo: string | null;
   player: "WHITE" | "BLACK";
 }
 
 interface ChessServerMessage {
   status: "SUCCESS" | "FAIL";
+  request: "STATE" | "MOVE" | "MOVESET" | "RESET";
   position: string | null;
-  state: string | null;
+  state: string;
 }
 
 const responseSchema: z.ZodType<ChessServerMessage> = z.object({
   status: z.enum(["SUCCESS", "FAIL"]),
+  request: z.enum(["STATE", "MOVE", "MOVESET", "RESET"]),
   position: z.string().or(z.null()),
-  state: z.string().or(z.null()),
+  state: z.string(),
 });
 
 const imgMap: { [name: string]: string } = {
@@ -63,6 +70,9 @@ export const ChessBoard = () => {
       .fill(null)
       .map(() => new Array(8).fill(null))
   );
+  const stompClient = useStompClient();
+  const [selection, setSelection] = useState<Position | null>(null);
+  const [moves, setMoves] = useState<Set<string> | null>(null);
 
   const handleServerResponse = (response: string) => {
     const result = responseSchema.safeParse(JSON.parse(response));
@@ -78,7 +88,23 @@ export const ChessBoard = () => {
       return;
     }
 
-    if (serverMessage.state !== null) {
+    if (serverMessage.request === "MOVESET") {
+      if (serverMessage.position === null) {
+        setMoves(null);
+      } else {
+        const newMoves = new Set<string>();
+        for (const pos of serverMessage.position.split(",")) {
+          if (pos !== "") {
+            newMoves.add(pos);
+          }
+        }
+        setMoves(newMoves);
+        console.log(moves);
+      }
+      return;
+    }
+
+    if (serverMessage.request === "STATE") {
       const boardBuffer = serverMessage.state.split(",");
       console.log(boardBuffer);
       const newBoard: ChessPiece[][] = Array(8)
@@ -95,10 +121,23 @@ export const ChessBoard = () => {
         }
       }
       setBoard(newBoard);
+      return;
     }
   };
 
-  // Have to track what my last request was. Feels bad, should add this in the server response
+  const makeRequest = (message: ChessClientMessage) => {
+    if (stompClient) {
+      stompClient.publish({
+        headers: {
+          "content-type": "application/json",
+        },
+        destination: "/app/chess",
+        body: JSON.stringify(message),
+      });
+    } else {
+      console.log("Failed to publish");
+    }
+  };
 
   useSubscription("/state/response", (message) =>
     handleServerResponse(message.body)
@@ -111,14 +150,47 @@ export const ChessBoard = () => {
           <div
             className={styles.tile}
             style={{ background: (r + c) % 2 === 0 ? "green" : "beige" }}
-            onClick={tile === null ? () => {} : () => {}}
+            onClick={
+              tile === null
+                ? () => {}
+                : () => {
+                    if (selection?.x === c && selection?.y === r) {
+                      setSelection(null);
+                      setMoves(null);
+                    } else {
+                      setSelection({ x: c, y: r });
+                      makeRequest({
+                        request: "MOVESET",
+                        positionFrom: c.toString() + r.toString(),
+                        positionTo: null,
+                        player: tile.player === "w" ? "WHITE" : "BLACK",
+                      });
+                    }
+                  }
+            }
           >
-            {tile && (
-              <img
-                src={imgMap[tile.player + tile.id.substring(0, 1)]}
-                className={styles.chessPiece}
-              />
-            )}
+            <div
+              className={
+                selection?.x === c && selection?.y === r
+                  ? styles.selectedTile
+                  : ""
+              }
+            >
+              <div
+                className={
+                  moves?.has(c.toString() + r.toString())
+                    ? styles.possibleMoves
+                    : styles.tile
+                }
+              >
+                {tile && (
+                  <img
+                    src={imgMap[tile.player + tile.id.substring(0, 1)]}
+                    className={styles.chessPiece}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         ))
       )}

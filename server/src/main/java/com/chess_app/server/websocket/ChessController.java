@@ -12,7 +12,7 @@ import java.util.Set;
 @Controller
 public class ChessController {
 
-    ChessBoard board = new ChessBoard();
+    private ChessBoard board = new ChessBoard();
 
     @MessageMapping("/chess")
     @SendTo("/state/response")
@@ -39,6 +39,10 @@ public class ChessController {
                     System.out.println("Fail: " + e.getMessage());
                     return new ChessServerMessage("FAIL", "MOVE", e.getMessage(), e.getPositionInvolved());
                 }
+            case "RESET":
+                board = new ChessBoard();
+                System.out.println("Success: Game state is reset");
+                return new ChessServerMessage("SUCCESS", "RESET",board.serialize());
         }
 
         return new ChessServerMessage("FAIL", message.getRequest(), "Invalid request");

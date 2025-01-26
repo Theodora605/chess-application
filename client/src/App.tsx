@@ -36,8 +36,8 @@ export function SendingMessages() {
           "content-type": "application/json",
         },
         destination: "/app/chess",
-        //body: '{"request":"STATE"}',
-        body: '{"request":"MOVESET","positionFrom":"01","player":"WHITE"}',
+        body: '{"request":"STATE"}',
+        //body: '{"request":"MOVESET","positionFrom":"01","player":"WHITE"}',
       });
     } else {
       console.log("Failed to publish");
