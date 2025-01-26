@@ -3,15 +3,18 @@ import {
   useStompClient,
   useSubscription,
 } from "react-stomp-hooks";
-import "./App.css";
 import { useState } from "react";
+import ChessBoard from "./components/ChessBoard";
+import styles from "./App.module.css";
 
 function App() {
   return (
-    <StompSessionProvider url={"http://localhost:8080/websocket"}>
-      <SendingMessages />
-      <SubscribingComponent />
-    </StompSessionProvider>
+    <div className={styles.main}>
+      <StompSessionProvider url={"http://localhost:8080/websocket"}>
+        <ChessBoard />
+        <SendingMessages />
+      </StompSessionProvider>
+    </div>
   );
 }
 
@@ -33,7 +36,8 @@ export function SendingMessages() {
           "content-type": "application/json",
         },
         destination: "/app/chess",
-        body: '{"request":"STATE"}',
+        //body: '{"request":"STATE"}',
+        body: '{"request":"MOVESET","positionFrom":"01","player":"WHITE"}',
       });
     } else {
       console.log("Failed to publish");
