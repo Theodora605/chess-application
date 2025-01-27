@@ -1,0 +1,14 @@
+.menu {
+    display: grid;
+    width: 600px;
+    height: 400px;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid black;
+    background: lightblue;
+}
+
+.cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

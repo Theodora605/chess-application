@@ -7,16 +7,19 @@ public class ChessBoard {
     private final ChessPiece[][] board;
     private final Map<String, int[]> whitePositionMap;
     private final Map<String, int[]> blackPositionMap;
+    private int turn;
 
     public ChessBoard(){
+        turn = ChessPiece.WHITE;
+
         board = new ChessPiece[8][8];
 
         ChessPiece[] whiteBackRow = new ChessPiece[]{
                 new Rook("r0", ChessPiece.WHITE),
                 new Knight("n0", ChessPiece.WHITE),
                 new Bishop("b0", ChessPiece.WHITE),
-                new Queen("q", ChessPiece.WHITE),
                 new King("k", ChessPiece.WHITE),
+                new Queen("q", ChessPiece.WHITE),
                 new Bishop("b1", ChessPiece.WHITE),
                 new Knight("n1", ChessPiece.WHITE),
                 new Rook("r1", ChessPiece.WHITE)
@@ -26,8 +29,8 @@ public class ChessBoard {
                 new Rook("r0", ChessPiece.BLACK),
                 new Knight("n0", ChessPiece.BLACK),
                 new Bishop("b0", ChessPiece.BLACK),
-                new Queen("q", ChessPiece.BLACK),
                 new King("k", ChessPiece.BLACK),
+                new Queen("q", ChessPiece.BLACK),
                 new Bishop("b1", ChessPiece.BLACK),
                 new Knight("n1", ChessPiece.BLACK),
                 new Rook("r1", ChessPiece.BLACK)
@@ -54,6 +57,10 @@ public class ChessBoard {
     }
 
     public void move(String from, String to, int player) throws ChessError{
+        if(turn != player){
+            throw new ChessError("Not your turn");
+        }
+
         int xCurr = Integer.parseInt(from.substring(0,1));
         int yCurr = Integer.parseInt(from.substring(1));
 
@@ -65,8 +72,17 @@ public class ChessBoard {
         int xNew = Integer.parseInt(to.substring(0,1));
         int yNew = Integer.parseInt(to.substring(1));
 
+        ChessPiece captured = board[xNew][yNew];
         board[xNew][yNew] = board[xCurr][yCurr];
         board[xCurr][yCurr] = null;
+
+        if(captured != null){
+            if(captured.getTeam() == ChessPiece.WHITE) {
+                whitePositionMap.remove(captured.getId());
+            }else{
+                blackPositionMap.remove(captured.getId());
+            }
+        }
 
         // Verify check!
         if(player == ChessPiece.WHITE){
@@ -75,8 +91,11 @@ public class ChessBoard {
                 int oppY = blackPositionMap.get(key)[1];
                 if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
                     // then revert state
+                    if(captured!=null){
+                        blackPositionMap.put(captured.getId(), new int[]{oppX, oppY});
+                    }
                     board[xCurr][yCurr] = board[xNew][yNew];
-                    board[xNew][yNew] = board[xCurr][yCurr];
+                    board[xNew][yNew] = captured;
                     throw new ChessError("In check!", String.valueOf(oppX)+String.valueOf(oppY));
                 }
             }
@@ -87,8 +106,11 @@ public class ChessBoard {
 
                 if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
                     //then revert
+                    if(captured!=null){
+                        whitePositionMap.put(captured.getId(), new int[]{oppX, oppY});
+                    }
                     board[xCurr][yCurr] = board[xNew][yNew];
-                    board[xNew][yNew] = board[xCurr][yCurr];
+                    board[xNew][yNew] = captured;
                     throw new ChessError("In check!", String.valueOf(oppX)+String.valueOf(oppY));
                 }
             }
@@ -100,7 +122,7 @@ public class ChessBoard {
             blackPositionMap.put(board[xNew][yNew].getId(), new int[]{xNew,yNew});
         }
 
-
+        turn = (turn + 1) % 2;
     }
 
     public String serialize(){

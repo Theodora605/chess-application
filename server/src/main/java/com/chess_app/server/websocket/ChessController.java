@@ -22,30 +22,30 @@ public class ChessController {
                 try {
                     Set<String> moves = board.getMoveset(message.getPositionFrom(), message.getPlayer().equals("WHITE") ? ChessPiece.WHITE : ChessPiece.BLACK);
                     System.out.println("Success: " + moves );
-                    return new ChessServerMessage("SUCCESS", "MOVESET", board.serialize(), String.join(",", moves));
+                    return new ChessServerMessage("SUCCESS", "MOVESET", message.getPlayer(), board.serialize(), String.join(",", moves));
                 }catch (ChessError e){
                     System.out.println("Fail: "+e.getMessage());
-                    return new ChessServerMessage("FAIL", "MOVESET", e.getMessage(), e.getPositionInvolved());
+                    return new ChessServerMessage("FAIL", "MOVESET", message.getPlayer(), e.getMessage(), e.getPositionInvolved());
                 }
             case "STATE":
                 System.out.println("Success: " + board.serialize());
-                return new ChessServerMessage("SUCCESS", "STATE", board.serialize());
+                return new ChessServerMessage("SUCCESS", "STATE", message.getPlayer(), board.serialize());
             case "MOVE":
                 try {
                     board.move(message.getPositionFrom(), message.getPositionTo(), message.getPlayer().equals("WHITE") ? ChessPiece.WHITE : ChessPiece.BLACK);
                     System.out.println("Success");
-                    return new ChessServerMessage("SUCCESS", "MOVE", board.serialize());
+                    return new ChessServerMessage("SUCCESS", "MOVE", message.getPlayer(), board.serialize());
                 }catch (ChessError e){
                     System.out.println("Fail: " + e.getMessage());
-                    return new ChessServerMessage("FAIL", "MOVE", e.getMessage(), e.getPositionInvolved());
+                    return new ChessServerMessage("FAIL", "MOVE", message.getPlayer(), e.getMessage(), e.getPositionInvolved());
                 }
             case "RESET":
                 board = new ChessBoard();
                 System.out.println("Success: Game state is reset");
-                return new ChessServerMessage("SUCCESS", "RESET",board.serialize());
+                return new ChessServerMessage("SUCCESS", "RESET", message.getPlayer(), board.serialize());
         }
 
-        return new ChessServerMessage("FAIL", message.getRequest(), "Invalid request");
+        return new ChessServerMessage("FAIL", message.getRequest(), message.getPlayer(), "Invalid request");
     }
 
 }

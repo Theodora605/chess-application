@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStompClient, useSubscription } from "react-stomp-hooks";
 import { z } from "zod";
 import styles from "./ChessBoard.module.css";
@@ -37,6 +37,7 @@ interface ChessClientMessage {
 interface ChessServerMessage {
   status: "SUCCESS" | "FAIL";
   request: "STATE" | "MOVE" | "MOVESET" | "RESET";
+  player: "WHITE" | "BLACK";
   position: string | null;
   state: string;
 }
@@ -44,6 +45,7 @@ interface ChessServerMessage {
 const responseSchema: z.ZodType<ChessServerMessage> = z.object({
   status: z.enum(["SUCCESS", "FAIL"]),
   request: z.enum(["STATE", "MOVE", "MOVESET", "RESET"]),
+  player: z.enum(["WHITE", "BLACK"]),
   position: z.string().or(z.null()),
   state: z.string(),
 });
@@ -64,7 +66,20 @@ const imgMap: { [name: string]: string } = {
   bk: BKingImg,
 };
 
-export const ChessBoard = () => {
+interface Props {
+  player: "WHITE" | "BLACK";
+}
+
+export const ChessBoard = ({ player }: Props) => {
+  useEffect(() => {
+    makeRequest({
+      request: "STATE",
+      positionFrom: null,
+      positionTo: null,
+      player: "WHITE",
+    });
+  }, []);
+
   const [board, setBoard] = useState<ChessPiece[][]>(
     Array(8)
       .fill(null)
@@ -75,6 +90,7 @@ export const ChessBoard = () => {
   const [moves, setMoves] = useState<Set<string> | null>(null);
 
   const handleServerResponse = (response: string) => {
+    console.log(response);
     const result = responseSchema.safeParse(JSON.parse(response));
     if (!result.success) {
       console.log("Failed to parse response");
@@ -88,14 +104,24 @@ export const ChessBoard = () => {
       return;
     }
 
-    if (serverMessage.request === "MOVESET") {
+    if (
+      serverMessage.request === "MOVESET" &&
+      serverMessage.player === player &&
+      selection !== null
+    ) {
+      console.log(serverMessage);
       if (serverMessage.position === null) {
         setMoves(null);
       } else {
         const newMoves = new Set<string>();
         for (const pos of serverMessage.position.split(",")) {
-          if (pos !== "") {
+          if (pos !== "" && player === "BLACK") {
             newMoves.add(pos);
+          } else {
+            newMoves.add(
+              (7 - parseInt(pos.charAt(0))).toString() +
+                (7 - parseInt(pos.charAt(1))).toString()
+            );
           }
         }
         setMoves(newMoves);
@@ -104,9 +130,15 @@ export const ChessBoard = () => {
       return;
     }
 
-    if (serverMessage.request === "STATE") {
+    if (
+      serverMessage.request === "STATE" ||
+      serverMessage.request === "MOVE" ||
+      serverMessage.request === "RESET"
+    ) {
       const boardBuffer = serverMessage.state.split(",");
-      console.log(boardBuffer);
+      if (player === "WHITE") {
+        boardBuffer.reverse();
+      }
       const newBoard: ChessPiece[][] = Array(8)
         .fill(null)
         .map(() => new Array(8).fill(null));
@@ -119,6 +151,10 @@ export const ChessBoard = () => {
             };
           }
         }
+      }
+      if (serverMessage.request === "MOVE") {
+        setMoves(null);
+        setSelection(null);
       }
       setBoard(newBoard);
       return;
@@ -148,11 +184,32 @@ export const ChessBoard = () => {
       {board.map((row, r) =>
         row.map((tile, c) => (
           <div
+            key={`tile-${r}${c}`}
             className={styles.tile}
-            style={{ background: (r + c) % 2 === 0 ? "green" : "beige" }}
+            style={{ background: (r + c) % 2 === 0 ? "beige" : "green" }}
             onClick={
-              tile === null
-                ? () => {}
+              tile === null || tile.player !== player.charAt(0).toLowerCase()
+                ? () => {
+                    if (
+                      moves?.has(c.toString() + r.toString()) &&
+                      selection !== null
+                    ) {
+                      console.log(c, r);
+                      makeRequest({
+                        request: "MOVE",
+                        positionFrom:
+                          player === "BLACK"
+                            ? selection.x.toString() + selection.y.toString()
+                            : (7 - selection.x).toString() +
+                              (7 - selection.y).toString(),
+                        positionTo:
+                          player === "BLACK"
+                            ? c.toString() + r.toString()
+                            : (7 - c).toString() + (7 - r).toString(),
+                        player: player,
+                      });
+                    }
+                  }
                 : () => {
                     if (selection?.x === c && selection?.y === r) {
                       setSelection(null);
@@ -161,9 +218,12 @@ export const ChessBoard = () => {
                       setSelection({ x: c, y: r });
                       makeRequest({
                         request: "MOVESET",
-                        positionFrom: c.toString() + r.toString(),
+                        positionFrom:
+                          player === "BLACK"
+                            ? c.toString() + r.toString()
+                            : (7 - c).toString() + (7 - r).toString(),
                         positionTo: null,
-                        player: tile.player === "w" ? "WHITE" : "BLACK",
+                        player: player,
                       });
                     }
                   }

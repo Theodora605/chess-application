@@ -1,49 +1,50 @@
-import {
-  StompSessionProvider,
-  useStompClient,
-  useSubscription,
-} from "react-stomp-hooks";
-import { useState } from "react";
+import { StompSessionProvider, useStompClient } from "react-stomp-hooks";
 import ChessBoard from "./components/ChessBoard";
 import styles from "./App.module.css";
+import TeamSelection from "./components/TeamSelection";
+import { useState } from "react";
+
+export type Team = null | "WHITE" | "BLACK";
 
 function App() {
+  const [selection, setSelection] = useState<Team>(null);
+
+  const handleSelection = (s: Team) => {
+    setSelection(s);
+  };
+
   return (
     <div className={styles.main}>
       <StompSessionProvider url={"http://localhost:8080/websocket"}>
-        <ChessBoard />
+        {!selection && <TeamSelection onSelection={handleSelection} />}
+        {selection && <ChessBoard player={selection} />}
         <SendingMessages />
       </StompSessionProvider>
     </div>
   );
 }
 
-export function SubscribingComponent() {
-  const [response, setResponse] = useState("No message yet");
-
-  useSubscription("/state/response", (message) => setResponse(message.body));
-
-  return <div>{response}</div>;
-}
-
 export function SendingMessages() {
   const stompClient = useStompClient();
 
-  const sendMessage = () => {
+  const requestReset = () => {
     if (stompClient) {
       stompClient.publish({
         headers: {
           "content-type": "application/json",
         },
         destination: "/app/chess",
-        body: '{"request":"STATE"}',
-        //body: '{"request":"MOVESET","positionFrom":"01","player":"WHITE"}',
+        body: '{"request":"RESET","player":"WHITE"}',
       });
     } else {
       console.log("Failed to publish");
     }
   };
-  return <button onClick={sendMessage}>Request State</button>;
+  return (
+    <div>
+      <button onClick={requestReset}>Reset</button>
+    </div>
+  );
 }
 
 export default App;
