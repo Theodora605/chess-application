@@ -76,7 +76,7 @@ export const ChessBoard = ({ player }: Props) => {
       request: "STATE",
       positionFrom: null,
       positionTo: null,
-      player: "WHITE",
+      player: player,
     });
   }, []);
 

@@ -5,6 +5,8 @@ import java.util.Set;
 
 public class Pawn extends ChessPiece{
 
+    boolean hopped;
+
     @Override
     public Set<String> getMoveset(int xPos, int yPos, ChessPiece[][] board) {
         Set<String> res = new HashSet<>();
@@ -24,7 +26,18 @@ public class Pawn extends ChessPiece{
             res.add(String.valueOf(xPos+1) + String.valueOf(yPos+dir) );
         }
 
-        // Handle en passant by board state?
+        // Handle en passant
+        if(inBounds(xPos-1, yPos) && board[xPos-1][yPos] instanceof Pawn p){
+            if(p.hasHopped()){
+                res.add( String.valueOf(xPos-1) + String.valueOf(yPos+dir) );
+            }
+        }
+
+        if(inBounds(xPos+1, yPos) && board[xPos+1][yPos] instanceof Pawn p){
+            if(p.hasHopped()){
+                res.add( String.valueOf(xPos+1) + String.valueOf(yPos+dir) );
+            }
+        }
 
 
         return res;
@@ -45,7 +58,16 @@ public class Pawn extends ChessPiece{
 
     }
 
+    public boolean hasHopped(){
+        return hopped;
+    }
+
+    public void setHopped(boolean hopped){
+        this.hopped = hopped;
+    }
+
     public Pawn(String id, int team){
         super(id, team);
+        hopped = false;
     }
 }

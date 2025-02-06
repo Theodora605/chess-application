@@ -8,6 +8,7 @@ public abstract class ChessPiece {
 
     private final String id;
     private final int team;
+    private boolean moved;
 
     public abstract Set<String> getMoveset(int xPos, int yPos, ChessPiece[][] board);
     public abstract boolean hasCheck(int xPos, int yPos, ChessPiece[][] board);
@@ -23,6 +24,14 @@ public abstract class ChessPiece {
 
     public int getTeam(){
         return team;
+    }
+
+    public boolean isMoved(){
+        return moved;
+    }
+
+    public void moved(){
+        moved = false;
     }
 
     // TODO: Best home for these functions? Maybe separate ChessUtils?

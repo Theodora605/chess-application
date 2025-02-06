@@ -9,7 +9,12 @@ public class ChessBoard {
     private final Map<String, int[]> blackPositionMap;
     private int turn;
 
+    // Must be tracked for en passant
+    private Pawn pawnJustHopped;
+
     public ChessBoard(){
+        pawnJustHopped = null;
+
         turn = ChessPiece.WHITE;
 
         board = new ChessPiece[8][8];
@@ -84,6 +89,18 @@ public class ChessBoard {
             }
         }
 
+        ChessPiece enPassantCapture = null;
+        // Verify en passant
+        if(captured == null && board[xNew][yNew] instanceof Pawn && xNew != xCurr){
+            enPassantCapture = board[xNew][yCurr];
+            board[xNew][yCurr] = null;
+            if(enPassantCapture.getTeam() == ChessPiece.WHITE) {
+                whitePositionMap.remove(enPassantCapture.getId());
+            }else{
+                blackPositionMap.remove(enPassantCapture.getId());
+            }
+        }
+
         // Verify check!
         if(player == ChessPiece.WHITE){
             for(String key: blackPositionMap.keySet()){
@@ -92,7 +109,11 @@ public class ChessBoard {
                 if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
                     // then revert state
                     if(captured!=null){
-                        blackPositionMap.put(captured.getId(), new int[]{oppX, oppY});
+                        blackPositionMap.put(captured.getId(), new int[]{xNew, yNew});
+                    }
+                    if(enPassantCapture != null){
+                        board[xNew][yCurr] = enPassantCapture;
+                        blackPositionMap.put(enPassantCapture.getId(), new int[]{xNew, yCurr});
                     }
                     board[xCurr][yCurr] = board[xNew][yNew];
                     board[xNew][yNew] = captured;
@@ -107,7 +128,11 @@ public class ChessBoard {
                 if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
                     //then revert
                     if(captured!=null){
-                        whitePositionMap.put(captured.getId(), new int[]{oppX, oppY});
+                        whitePositionMap.put(captured.getId(), new int[]{xNew, yNew});
+                    }
+                    if(enPassantCapture != null){
+                        board[xNew][yCurr] = enPassantCapture;
+                        whitePositionMap.put(enPassantCapture.getId(), new int[]{xNew, yCurr});
                     }
                     board[xCurr][yCurr] = board[xNew][yNew];
                     board[xNew][yNew] = captured;
@@ -122,6 +147,39 @@ public class ChessBoard {
             blackPositionMap.put(board[xNew][yNew].getId(), new int[]{xNew,yNew});
         }
 
+        // Castling edge case
+        if(board[xNew][yNew] instanceof King){
+            if(xNew - xCurr == 2){
+
+                board[xNew-1][yNew] = board[7][yNew];
+                board[7][yNew] = null;
+                if(board[xNew-1][yNew].getTeam() == ChessPiece.WHITE){
+                    whitePositionMap.put(board[xNew-1][yNew].getId(), new int[]{xNew-1,yNew});
+                }else{
+                    blackPositionMap.put(board[xNew-1][yNew].getId(), new int[]{xNew-1, yNew});
+                }
+            }
+            else if(xNew - xCurr == -2){
+                board[xNew+1][yNew] = board[0][yNew];
+                board[0][yNew] = null;
+                if(board[xNew+1][yNew].getTeam() == ChessPiece.WHITE){
+                    whitePositionMap.put(board[xNew+1][yNew].getId(), new int[]{xNew+1,yNew});
+                }else{
+                    blackPositionMap.put(board[xNew+1][yNew].getId(), new int[]{xNew+1, yNew});
+                }
+            }
+        }
+
+        // Update pawn hopped for en passant case
+        if(pawnJustHopped != null){
+            pawnJustHopped.setHopped(false);
+        }
+        if(board[xNew][yNew] instanceof Pawn pawnPiece){
+            pawnPiece.setHopped(true);
+            pawnJustHopped = pawnPiece;
+        }
+
+        board[xNew][yNew].moved();
         turn = (turn + 1) % 2;
     }
 

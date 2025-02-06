@@ -18,8 +18,32 @@ public class King extends ChessPiece{
             }
         }
 
+        int xCurr;
+        // Verify castling possible
+        if(!isMoved()){
+            xCurr = xPos - 1;
+            while(inBounds(xCurr, yPos) && board[xCurr][yPos] == null ){
+                xCurr--;
+            }
+
+            if(inBounds(xCurr, yPos) && board[xCurr][yPos] instanceof Rook && !board[xCurr][yPos].isMoved()){
+                res.add(String.valueOf(xPos-2) + String.valueOf(yPos));
+            }
+
+            xCurr = xPos + 1;
+            while(inBounds(xCurr, yPos) && board[xCurr][yPos] == null ){
+                xCurr++;
+            }
+
+            if(inBounds(xCurr, yPos) && board[xCurr][yPos] instanceof Rook && !board[xCurr][yPos].isMoved()){
+                res.add(String.valueOf(xPos+2) + String.valueOf(yPos));
+            }
+        }
+
         return res;
     }
+
+
 
     @Override
     public boolean hasCheck(int xPos, int yPos, ChessPiece[][] board) {
