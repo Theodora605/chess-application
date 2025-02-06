@@ -16,6 +16,7 @@ public abstract class ChessPiece {
     public ChessPiece(String id, int team){
         this.id = id;
         this.team = team;
+        this.moved = false;
     }
 
     public String getId(){
@@ -31,7 +32,7 @@ public abstract class ChessPiece {
     }
 
     public void moved(){
-        moved = false;
+        moved = true;
     }
 
     // TODO: Best home for these functions? Maybe separate ChessUtils?
