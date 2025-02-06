@@ -35,7 +35,6 @@ public abstract class ChessPiece {
         moved = true;
     }
 
-    // TODO: Best home for these functions? Maybe separate ChessUtils?
     public static boolean inBounds(int xPos, int yPos){
         return xPos >= 0 && yPos >= 0 && xPos < 8 && yPos < 8;
     }
