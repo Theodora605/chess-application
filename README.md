@@ -4,6 +4,7 @@ This Java application is a server that manages a chess game state using a STOMP 
 ## Recent Changes
 - Added en passant
 - Added castling
+
 **Upcoming:** Handling of pawn promotions
 
 ## Build Instructions
