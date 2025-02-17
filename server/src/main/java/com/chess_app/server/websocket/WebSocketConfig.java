@@ -17,8 +17,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.setApplicationDestinationPrefixes("/app");
     }
 
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry){
-        registry.addEndpoint("/websocket").setAllowedOrigins("http://localhost:5173").withSockJS();
+        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS();
+        // Use the following instead when testing with API clients such as Postman
+        // registry.addEndpoint("/websocket");
     }
+
 }
