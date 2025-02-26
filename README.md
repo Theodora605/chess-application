@@ -1,8 +1,15 @@
 # Chess Service
 This Java application is a server that manages a chess game state using a STOMP websocket
 
+## Recent Changes
+- Added en passant
+- Added castling
+
+**Upcoming:** Handling of pawn promotions
+
 ## Build Instructions
 It is recommended to use IntelliJ with Java 17 for this project.
+
 Compile a jar file by executing the Maven Goal:
 `mvn package -Dmaven.test.skip`
 
