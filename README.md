@@ -126,7 +126,9 @@ destination:/app/chess
 {
     "request":"PROMOTE"
     "promoteTo":"q"
+    "player":"WHITE"
 }
+{{NULL_CHAR}}
 ```
 A `PROMOTE` request can be made when the game server is in a promotion state (ie: a pawn reaching the opposite side of the board). The request replaces the pawn that initiated this game state with the chess piece specified by the character passed
 to  `promoteTo`:
