@@ -43,6 +43,15 @@ public class ChessController {
                 board = new ChessBoard();
                 System.out.println("Success: Game state is reset");
                 return new ChessServerMessage("SUCCESS", "RESET", message.getPlayer(), board.serialize());
+            case "PROMOTE":
+                try {
+                    board.promote(message.getPromoteTo(), message.getPlayer().equals("WHITE") ? ChessPiece.WHITE : ChessPiece.BLACK);
+                    System.out.println("Success: Promoted to "+message.getPromoteTo());
+                    return new ChessServerMessage("SUCCESS", "PROMOTE", message.getPlayer(), board.serialize());
+                }catch(ChessError e){
+                    System.out.println("Fail: "+e.getMessage());
+                    return new ChessServerMessage("FAIL", "PROMOTE", message.getPlayer(), e.getMessage());
+                }
         }
 
         return new ChessServerMessage("FAIL", message.getRequest(), message.getPlayer(), "Invalid request");

@@ -4,6 +4,12 @@ import java.util.*;
 
 public class ChessBoard {
 
+    // Turn state constants
+    private static final int WHITE = 0,
+                             BLACK = 1,
+                             WHITE_PROMOTION = 2,
+                             BLACK_PROMOTION = 3;
+
     private final ChessPiece[][] board;
     private final Map<String, int[]> whitePositionMap;
     private final Map<String, int[]> blackPositionMap;
@@ -12,8 +18,13 @@ public class ChessBoard {
     // Must be tracked for en passant
     private Pawn pawnJustHopped;
 
+    private int[] promoteSelection;
+    private int nPromotions;
+
     public ChessBoard(){
         pawnJustHopped = null;
+        promoteSelection = null;
+        nPromotions = 0;
 
         turn = ChessPiece.WHITE;
 
@@ -61,9 +72,43 @@ public class ChessBoard {
 
     }
 
-    public void move(String from, String to, int player) throws ChessError{
-        if(turn != player){
+    public void promote(char promoteTo, int player) throws ChessError{
+        if(turn != WHITE_PROMOTION && turn != BLACK_PROMOTION){
+            throw new ChessError("Not the time to promote");
+        }
+        if(turn % 2 != player){
             throw new ChessError("Not your turn");
+        }
+
+        int x = promoteSelection[0], y = promoteSelection[1];
+
+        switch (promoteTo){
+            case 'r':
+                board[x][y] = new Rook("rp"+nPromotions, player);
+                break;
+            case 'n':
+                board[x][y] = new Knight("np"+nPromotions, player);
+                break;
+            case 'b':
+                board[x][y] = new Bishop("bp"+nPromotions, player);
+                break;
+            case 'q':
+                board[x][y] = new Queen("qp"+nPromotions, player);
+                break;
+            default:
+                throw new ChessError(promoteTo + " is not a valid promotion");
+        }
+
+        nPromotions++;
+        turn = (turn + 1) % 2;
+    }
+
+    public void move(String from, String to, int player) throws ChessError{
+        if(turn % 2 != player){
+            throw new ChessError("Not your turn");
+        }
+        if(turn == WHITE_PROMOTION || turn == BLACK_PROMOTION){
+            throw new ChessError("Promotion expected");
         }
 
         int xCurr = Integer.parseInt(from.substring(0,1));
@@ -101,7 +146,26 @@ public class ChessBoard {
             }
         }
 
+        Map<String, int[]> oppPositionMap = player == ChessPiece.WHITE ? blackPositionMap : whitePositionMap;
         // Verify check!
+        for(String key: oppPositionMap.keySet()){
+            int oppX = oppPositionMap.get(key)[0];
+            int oppY = oppPositionMap.get(key)[1];
+            if (board[oppX][oppY].hasCheck(oppX,oppY,board)){
+                // then revert state
+                if(captured!=null){
+                    oppPositionMap.put(captured.getId(), new int[]{xNew, yNew});
+                }
+                if(enPassantCapture != null){
+                    board[xNew][yCurr] = enPassantCapture;
+                    oppPositionMap.put(enPassantCapture.getId(), new int[]{xNew, yCurr});
+                }
+                board[xCurr][yCurr] = board[xNew][yNew];
+                board[xNew][yNew] = captured;
+                throw new ChessError("In check!", String.valueOf(oppX)+String.valueOf(oppY));
+            }
+        }
+        /**
         if(player == ChessPiece.WHITE){
             for(String key: blackPositionMap.keySet()){
                 int oppX = blackPositionMap.get(key)[0];
@@ -120,6 +184,7 @@ public class ChessBoard {
                     throw new ChessError("In check!", String.valueOf(oppX)+String.valueOf(oppY));
                 }
             }
+
         } else { // player == BLACK
             for(String key: whitePositionMap.keySet()){
                 int oppX = whitePositionMap.get(key)[0];
@@ -140,6 +205,7 @@ public class ChessBoard {
                 }
             }
         }
+             */
 
         if(player == ChessPiece.WHITE){
             whitePositionMap.put(board[xNew][yNew].getId(), new int[]{xNew,yNew});
@@ -180,7 +246,14 @@ public class ChessBoard {
         }
 
         board[xNew][yNew].moved();
-        turn = (turn + 1) % 2;
+
+        // Move to promotion state if pawn reaches end of board, otherwise advance to opponents turn.
+        if((yNew == 0 || yNew == 7) && board[xNew][yNew] instanceof Pawn){
+            promoteSelection = new int[]{xNew, yNew};
+            turn += 2;
+        }else{
+            turn = (turn + 1) % 2;
+        }
     }
 
     public String serialize(){
