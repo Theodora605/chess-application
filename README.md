@@ -40,7 +40,8 @@ docker run -p 8080:8080 chess-server
 ```
 
 ## API
-The requests endpoint is `\app\chess` and the subscription endpoint is `\state\response`. The four types of requests that can be made to the server are: `STATE`, `RESET`, `MOVESET`, `MOVE`, and `PROMOTE`.
+The websocket endpoint is at `/websocket`. 
+All requests are made to the `/app/chess` destination and the subscriber destination is at `/state/response`. The five types of requests that can be made to the server are: `STATE`, `RESET`, `MOVESET`, `MOVE`, and `PROMOTE`.
 
 ### 1. STATE
 ```
