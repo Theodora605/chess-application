@@ -2,10 +2,13 @@
 This Java application is a server that manages a chess game state using a STOMP websocket
 
 ## Recent Changes
+
+### Feb 26, 2025
+- Added pawn promotion logic
+
+### Feb. 16, 2025
 - Added en passant
 - Added castling
-
-**Upcoming:** Handling of pawn promotions
 
 ## Build Instructions
 It is recommended to use IntelliJ with Java 17 for this project.
@@ -37,7 +40,7 @@ docker run -p 8080:8080 chess-server
 ```
 
 ## API
-The requests endpoint is `\app\chess` and the subscription endpoint is `\state\response`. The four types of requests that can be made to the server are: `STATE`, `RESET`, `MOVESET`, and `MOVE`.
+The requests endpoint is `\app\chess` and the subscription endpoint is `\state\response`. The four types of requests that can be made to the server are: `STATE`, `RESET`, `MOVESET`, `MOVE`, and `PROMOTE`.
 
 ### 1. STATE
 ```
@@ -113,6 +116,24 @@ destination:/app/chess
 A `MOVE` request prompts the server to update the board state by making the move as specified by `positionFrom` and `positionTo`. See the above section on `MOVESET` on information on how the position data ought to be passed.
 
 The server handles whether it is the correct player's turn, and if the move is valid.
+
+### 5. Promote
+```
+SEND
+destination:/app/chess
+
+{
+    "request":"PROMOTE"
+    "promoteTo":"q"
+}
+```
+A `PROMOTE` request can be made when the game server is in a promotion state (ie: a pawn reaching the opposite side of the board). The request replaces the pawn that initiated this game state with the chess piece specified by the character passed
+to  `promoteTo`:
+
+  - **r :** Rook
+  - **n :** Knight
+  - **b :** Bishop
+  - **q :** Queen
 
 ## Postman
 Before exploring the API with Postman, in `WebSocketConfig.java` modify
